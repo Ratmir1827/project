@@ -9,48 +9,38 @@ import { CreateUserInterface } from './interfaces/create-user.interface';
 import { UpdateUserInterface } from './interfaces/update-user.interface';
 import { PaginationDto } from 'src/dependencies/dto/pagination.dto';
 import { UserDto } from 'src/dependencies/dto/user.dto';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(User)
-        private userRepository: Repository<User>
+        private readonly userRepository: UserRepository,
     ) {}
 
     async findAll(paginationDto: PaginationDto<UserDto>): Promise<PaginationDto<UserDto>> {
         const { page, limit } = paginationDto;
 
-        const [users, totalItems] = await this.userRepository.findAndCount({
-            skip: (page - 1) * limit,
-            take: limit,
-        })
+        const findAllUsers = await this.userRepository.findAllUsers(paginationDto.page, paginationDto.limit);
 
-        const userDtos = users.map(user => new UserDto(user.id, user.name, user.surname, user.patronymic, user.email, user.phone))
+        const userDtos = findAllUsers.usersArr.map(user => new UserDto(user.id, user.name, user.surname, user.patronymic, user.email, user.phone))
 
-        return new PaginationDto<UserDto>(page, limit, totalItems, userDtos);
+        return new PaginationDto<UserDto>(page, limit, findAllUsers.totalItems, userDtos);
     }
 
     async create(createUserDto: CreateUserDto): Promise<CreateUserInterface> {
-        const findUser = await this.userRepository.findOneBy({ surname: createUserDto.surname });
+        const findUser = await this.userRepository.findOneUserBySurname(createUserDto.surname);
 
         if (findUser) {
             throw new ExistingDataException('A user with the same surname already exists!')
         }
 
-        const createUser = await this.userRepository.save(createUserDto);
+        const createUser = await this.userRepository.saveUser(createUserDto);
 
-        return {
-            id: createUser.id,
-            name: createUser.name,
-            surname: createUser.surname,
-            patronymic: createUser.patronymic,
-            email: createUser.email,
-            phone: createUser.phone,
-        }
+        return createUser;
     }
 
     async update(updateUserDto: UpdateUserDto, id: string): Promise<UpdateUserInterface> {
-        const findUser = await this.userRepository.findOneBy({ id: id})
+        const findUser = await this.userRepository.findOneUserById(id);
 
         if (!findUser) {
             throw new NotFoundException('User not found!')
@@ -61,26 +51,19 @@ export class UserService {
         findUser.patronymic = updateUserDto.patronymic;
         findUser.email = updateUserDto.email;
 
-        const save = await this.userRepository.save(findUser)
+        const saveUser = await this.userRepository.saveUser(findUser);
 
-        return {
-            id: save.id,
-            name: save.name,
-            surname: save.surname,
-            patronymic: save.patronymic,
-            email: save.email,
-            phone: save.phone,
-        };
+        return saveUser;
     }
 
     async delete(id: string) {
-        const findUser = await this.userRepository.findOneBy({ id: id })
+        const findUser = await this.userRepository.findOneUserById(id);
 
         if (!findUser) {
             throw new NotFoundException('User not found!');
         }
 
-        const deleteUser = await this.userRepository.remove(findUser);
+        await this.userRepository.removeUser(findUser);
 
         return 'User succsesful deleted!';
     }
