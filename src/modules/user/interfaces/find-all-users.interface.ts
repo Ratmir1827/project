@@ -1,6 +1,6 @@
 import { User } from "../entity/user.entity";
 
 export interface FindAllUsersInterface {
-    usersArr: [User];
+    usersArr: User[];
     totalItems: number;
 }

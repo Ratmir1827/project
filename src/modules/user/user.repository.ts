@@ -22,7 +22,10 @@ export class UserRepository {
             take: limit,
         })
 
-        return;
+        return {
+            usersArr: users,
+            totalItems: totalItems,
+        };
     }
 
     async findOneUserBySurname(surname: string): Promise<FindOneUser> {
