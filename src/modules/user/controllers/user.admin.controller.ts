@@ -16,13 +16,13 @@ export class UserAdminController {
         return this.userService.create(createUserDto);
     }
 
-    // @Put('update/:id')
-    // update(@Body() updateUserDto: UpdateUserDto, @Param('id') id: string) {
-    //     return this.userService.update(updateUserDto, id);
-    // }
+    @Put('update/:id')
+    update(@Body() updateUserDto: UpdateUserDto, @Param('id') id: string) {
+        return this.userService.update(updateUserDto, id);
+    }
 
-    // @Delete('delete/:id')
-    // delete(@Param('id') id: string) {
-    //     return this.userService.delete(id);
-    // }
+    @Delete('delete/:id')
+    delete(@Param('id') id: string) {
+        return this.userService.delete(id);
+    }
 }
